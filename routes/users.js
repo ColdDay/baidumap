@@ -49,9 +49,7 @@ router.post('/uploads',upload.single('myfile'), function(req, res, next) {
 		    ress.setEncoding('utf-8');  
 		    var str ='';
 		    ress.on('end',function(){
-		    	console.log('----------关键字查询---------')
 		    	var result = JSON.parse(str);
-		    	//console.log(result)
 		    	if(result.s.length <= 0 ){
 		    		//查询不到
 		    		if(word.length <= 0) {
@@ -84,6 +82,7 @@ router.post('/uploads',upload.single('myfile'), function(req, res, next) {
 			    	if(type == 2){
 			    		stop = result.q;
 			    		if(queryCount > 0){
+			    			console.log('二次元查询')
 		    				stop = result.s[0].split(/\$\d/)[0].replace(/\$/g,'');
 		    			}
 			    		//stop = result.s[0].split(/\$\d/)[0].replace(/\$/g,'');
@@ -141,27 +140,32 @@ router.post('/uploads',upload.single('myfile'), function(req, res, next) {
 		    ress.setEncoding('utf-8');  
 		    var str = '';
 		    ress.on('end',function(){ 
-		    	console.log('----------结果数据---------')
 		    	var result = JSON.parse(str);
 		    	var len = 0;
 		    	//if(str.toString().split('distance').length>0){
 		    	if(result.content && result.content.routes){
 		    		len = result.content.routes[0].legs[0].distance;
 		    		//len = str.toString().split('distance')[1].split(':')[1].split(',')[0];
-		    	}else if(result.content.length > 0){
+		    	}else if(result && result.content && result.content.length > 0){
 		    		var a = result.content[1];
-		    		console.log(a);
-		    		if(queryCount == 0 && a.length >= 1){
+		    		if(queryCount == 0 && a.length >= 0){
+		    			console.log('第一次查询')
 		    			stop = a[0].addr;
 		    			queryLens();
 		    			queryCount++;
 		    			return;
 		    		}else if(queryCount == 1){
-		    			su(2,xlRows[rowIndex][1])
+		    			console.log('第二次查询')
+		    			if(datatype == 1){
+			    			var w2 = xlRows[rowIndex][0] + ' ' + xlRows[rowIndex][1];
+			    			su(2,w2)
+			    		}else{
+			    			su(2,xlRows[rowIndex][1])
+			    		}		 
 		    			queryCount++;
 		    			return;
 		    		}else if(queryCount == 2){
-		    			
+		    			console.log('第三次查询，直接跳过')
 		    		}
 		    	}
 		    	
