@@ -1,0 +1,17 @@
+extends layout
+
+block content
+	form(action='/users/uploads/',method='post',ENCTYPE='multipart/form-data')
+		h1='百度地图地址查询'
+		h2='请上传包含起点和终点的Excel：第一列为起点，第二列为终点'
+		br
+		input(type='file',name='myfile')
+		h3='起点是否包含终点（这个很重要，包含的话查询算法会有所不同）'
+		label 是:
+			input(type='radio',name='type',value='1')
+		label 否:
+			input(type='radio',name='type',value='0')
+		br
+		br
+		button
+			上传
