@@ -4,6 +4,8 @@ block content
 	form(action='/users/uploads/',method='post',ENCTYPE='multipart/form-data')
 		h1='百度地图地址查询（仅限物流部门使用）'
 		h2='请上传包含起点和终点的Excel：第一列为起点，第二列为终点'
+		h3='建议每次查询数据在2000条以内'
+		h3='一条数据查询时间大概为0.6s,查询过程不要关闭浏览器，等待查询完成'
 		br
 		input(type='file',name='myfile',required='true')
 		h3='起点是否包含终点，比如 起点：河北，终点：石家庄，即存在包含关系（这个很重要，包含的话查询算法会有所不同）'

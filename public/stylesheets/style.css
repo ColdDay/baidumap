@@ -6,3 +6,27 @@ body {
 a {
   color: #00B7FF;
 }
+
+h1{
+	color: blue;
+}
+h3{
+	color:#ff0005;
+}
+button{
+	width: 100px;
+	height: 100px;
+	background: #0f557b;
+	font-size: 16px;
+	border:1px solid #666;
+	border-radius: 200px;
+	transition: transform 0.2s;
+	outline: none;
+	color: #FFF;
+}
+button:hover{
+	transform: scale(1.2);
+}
+button:active{
+	background-color: green;
+}
