@@ -18,6 +18,7 @@ var upload = multer({ storage: storage })
 
 /* GET users listing. */
 router.post('/uploads',upload.single('myfile'), function(req, res, next) {
+	console.log(req.body);
 	var queryCount = 0;
 	var myfilename = req.file.originalname;
 	var datatype = 0;
@@ -29,6 +30,9 @@ router.post('/uploads',upload.single('myfile'), function(req, res, next) {
 	var datatype = req.body.type;
 	var queryNoCount = 0;
 	var startTime = Date.now();
+	var timeoutCount = 0;
+
+	console.log(111111111);
 	xlRows = xlsx.parse('public/excles/'+req.file.originalname)[0].data;
 	su(1, xlRows[rowIndex][0]);
 	
@@ -55,10 +59,12 @@ router.post('/uploads',upload.single('myfile'), function(req, res, next) {
 			    		//查询不到
 			    		if(word.length <= 0) {
 			    			//递归结束
+			    			console.log('su没有结果')
 					    	queryError();
 			    		}else{
 			    			//递归删除查询
 			    			var w = word.slice(0,word.length-1);
+			    			console.log('递归查询---'+w)
 			    			if(w.length){
 			    				su(type,w);
 			    			}else{
@@ -89,6 +95,7 @@ router.post('/uploads',upload.single('myfile'), function(req, res, next) {
 				    	}
 			    	}
 		    	}catch(err){
+		    		console.log('catch-error');
 		    		if(err instanceof SyntaxError){
 		    			console.log('catch-error');
 		    			queryError();
@@ -101,7 +108,7 @@ router.post('/uploads',upload.single('myfile'), function(req, res, next) {
 		});  
 		hreq.on('error',function(err){
 			console.log('---su---error------')   
-		});  
+		}); 
 		hreq.end(); 
 	}
 
@@ -136,12 +143,28 @@ router.post('/uploads',upload.single('myfile'), function(req, res, next) {
 			b:'(12937545,4796788;12988809,4866548)',
 			t:Date.now()
 		};  
-		var content=querystring.stringify(data);   
+		var content = querystring.stringify(data);
+		var waitCount = 0;
+
+		var queryTimer = setTimeout(function(){
+			console.log('timeout-------------in');
+			if (waitCount > 0){
+				console.log('超时--------------');
+				timeoutCount++;
+		  	waitCount = 0;
+		  	queryError();
+		    return;
+		  }
+		}, 5000);
+
 		//创建请求  
 		var hreq = http.request('http://map.baidu.com?'+content,function(ress){  
 		    ress.setEncoding('utf-8');  
 		    var str = '';
+		    waitCount ++;
 		    ress.on('end',function(){
+		    	waitCount = 0;
+		    	clearTimeout(queryTimer); 
 		    	try{
 		    		var result = JSON.parse(str);
 			    	var len = 0;
@@ -169,7 +192,7 @@ router.post('/uploads',upload.single('myfile'), function(req, res, next) {
 			    			queryCount++;
 			    			return;
 			    		}else if(queryCount == 3){
-			    			console.log('fail>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
+			    			console.log('查询失败，直接跳过>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
 			    			queryNoCount++;
 			    		}
 			    	}
@@ -182,6 +205,8 @@ router.post('/uploads',upload.single('myfile'), function(req, res, next) {
 			    	rowIndex++;
 			    	queryCount = 0;
 			    	if(rowIndex == xlRows.length){
+			    		waitCount = 0;
+		    			clearTimeout(queryTimer); 
 			    		over();
 			    	}else{
 			    		su(1,xlRows[rowIndex][0])
@@ -206,22 +231,23 @@ router.post('/uploads',upload.single('myfile'), function(req, res, next) {
 
 	function queryError(){
 		console.log('queryError');
-		var arr = [];
+  	rowIndex++;
+  	queryCount = 0;
+  	if(rowIndex < xlRows.length - 1){
+  		var arr = [];
     	arr.push(xlRows[rowIndex][0]);
     	arr.push(xlRows[rowIndex][1]);
     	arr.push(0);
-    tempRows.push(arr);
-  	rowIndex++;
-  	queryCount = 0;
-  	if(rowIndex == xlRows.length - 1){
+    	tempRows.push(arr);
+  		su(1,xlRows[rowIndex][0])
+  	}else{
   		console.log('==>>>>>>>>查询结束:::'+ queryNoCount + '条查询失败')
   		over();
-  	}else{
-  		su(1,xlRows[rowIndex][0])
   	}
 	}
 	function over(){
-		console.log('查询结束-' + queryNoCount + '条查询失败')
+		console.log('查询结束-');
+		console.log(queryNoCount + '条查询失败')
 		var m = parseInt((Date.now() - startTime)/1000/60, 10);
 		var s = parseInt((Date.now() - startTime)/1000%60, 10);
 		var useTime = m + '分' + s +'秒';

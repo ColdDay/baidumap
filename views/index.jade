@@ -7,12 +7,12 @@ block content
 		h3='建议每次查询数据在2000条以内'
 		h3='一条数据查询时间大概为0.6s,查询过程不要关闭浏览器，等待查询完成'
 		br
-		input(type='file',name='myfile',required='true')
+		input(type='file',name='myfile',required='true',class='myfile')
 		h3='起点是否包含终点，比如 起点：河北，终点：石家庄，即存在包含关系（这个很重要，包含的话查询算法会有所不同）'
 		label 是:
-			input(type='radio',name='type',value='1')
+			input(type='radio',name='type',value='1',class='type')
 		label 否:
-			input(type='radio',name='type',value='0' checked='checked')
+			input(type='radio',name='type',value='0' checked='checked',class='type')
 		br
 		br
 		button
