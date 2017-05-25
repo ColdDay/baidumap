@@ -55,12 +55,10 @@ router.post('/uploads',upload.single('myfile'), function(req, res, next) {
 			    		//查询不到
 			    		if(word.length <= 0) {
 			    			//递归结束
-			    			console.log('su没有结果')
 					    	queryError();
 			    		}else{
 			    			//递归删除查询
 			    			var w = word.slice(0,word.length-1);
-			    			console.log('递归查询---'+w)
 			    			if(w.length){
 			    				su(type,w);
 			    			}else{
@@ -171,7 +169,7 @@ router.post('/uploads',upload.single('myfile'), function(req, res, next) {
 			    			queryCount++;
 			    			return;
 			    		}else if(queryCount == 3){
-			    			console.log('fail>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
+			    			console.log('fail>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
 			    			queryNoCount++;
 			    		}
 			    	}
