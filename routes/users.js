@@ -14,11 +14,13 @@ var storage = multer.diskStorage({
     cb(null, file.originalname)
   }
 })
+var serverStartTime = Date.now();
 var upload = multer({ storage: storage })
 
 /* GET users listing. */
 router.post('/uploads',upload.single('myfile'), function(req, res, next) {
-	console.log(req.body);
+	console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+	console.log(Date.now() - serverStartTime)
 	var queryCount = 0;
 	var myfilename = req.file.originalname;
 	var datatype = 0;
@@ -31,8 +33,8 @@ router.post('/uploads',upload.single('myfile'), function(req, res, next) {
 	var queryNoCount = 0;
 	var startTime = Date.now();
 	var timeoutCount = 0;
-
-	console.log(111111111);
+	var isover = false;
+	console.log(req.file.originalname);
 	xlRows = xlsx.parse('public/excles/'+req.file.originalname)[0].data;
 	su(1, xlRows[rowIndex][0]);
 	
@@ -47,12 +49,25 @@ router.post('/uploads',upload.single('myfile'), function(req, res, next) {
 			t:Date.now(),
 			pc_ver:2
 		}
-		var parm = querystring.stringify(data); 
+		var parm = querystring.stringify(data);
+		var waitCount = 0;
+		var queryTimer = setTimeout(function(){
+			if (waitCount > 0){
+				console.log('超时--------------');
+				timeoutCount++;
+		  	waitCount = 0;
+		  	queryError();
+		    return;
+		  }
+		}, 3000); 
 		//创建请求  
 		var hreq=http.request('http://map.baidu.com/su?'+parm,function(ress){  
 		    ress.setEncoding('utf-8');  
 		    var str ='';
+		    waitCount ++;
 		    ress.on('end',function(){
+		    	waitCount = 0;
+		    	clearTimeout(queryTimer);
 		    	try{
 		    		var result = JSON.parse(str);
 			    	if(result.s.length <= 0 ){
@@ -95,9 +110,12 @@ router.post('/uploads',upload.single('myfile'), function(req, res, next) {
 				    	}
 			    	}
 		    	}catch(err){
-		    		console.log('catch-error');
+		    		console.log(err);
 		    		if(err instanceof SyntaxError){
-		    			console.log('catch-error');
+		    			console.log('SyntaxError-query');
+		    			queryError();
+		    		} else if( err instanceof TypeError){
+		    			console.log('TypeError-query');
 		    			queryError();
 		    		}
 		    	}
@@ -107,7 +125,8 @@ router.post('/uploads',upload.single('myfile'), function(req, res, next) {
 		    });  
 		});  
 		hreq.on('error',function(err){
-			console.log('---su---error------')   
+			console.log('---su---error------')
+			queryError();  
 		}); 
 		hreq.end(); 
 	}
@@ -143,11 +162,12 @@ router.post('/uploads',upload.single('myfile'), function(req, res, next) {
 			b:'(12937545,4796788;12988809,4866548)',
 			t:Date.now()
 		};  
+		console.log('query====in');
 		var content = querystring.stringify(data);
 		var waitCount = 0;
-
 		var queryTimer = setTimeout(function(){
-			console.log('timeout-------------in');
+			if(isover)
+				return
 			if (waitCount > 0){
 				console.log('超时--------------');
 				timeoutCount++;
@@ -155,10 +175,11 @@ router.post('/uploads',upload.single('myfile'), function(req, res, next) {
 		  	queryError();
 		    return;
 		  }
-		}, 5000);
+		}, 3000);
 
 		//创建请求  
-		var hreq = http.request('http://map.baidu.com?'+content,function(ress){  
+		try{
+				var hreq = http.request('http://map.baidu.com?'+content,function(ress){  
 		    ress.setEncoding('utf-8');  
 		    var str = '';
 		    waitCount ++;
@@ -170,30 +191,30 @@ router.post('/uploads',upload.single('myfile'), function(req, res, next) {
 			    	var len = 0;
 			    	if(result.content && result.content.routes){
 			    		len = result.content.routes[0].legs[0].distance;
-			    	}else if(result && result.content && result.content.length > 0){
+			    	}else if(result && result.content && result.content.length > 1){
 			    		var a = result.content[1];
-			    		if(queryCount == 0 && a.length >= 0){
-			    			stop = a[0].addr;
+			    		if(a.length == 0 || queryCount == 3){
+			    			console.log('查询失败，直接跳过>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
+			    			queryNoCount++;
+			    		}else if(queryCount == 0 && a.length > 0){
+			    			stop = a[0].addr || a[0].name;
 			    			queryLens();
 			    			queryCount++;
 			    			return;
-			    		}else if(queryCount == 1){
+			    		}else if(queryCount == 1 && a.length > 1){
+			    			stop = a[0].name || a[0].addr;
+			    			queryLens();
+			    			queryCount++;
+			    			return;
+			    		}else if(queryCount == 2 && a.length > 0){
 			    			if(datatype == 1){
-				    			var w2 = xlRows[rowIndex][0] + ' ' + xlRows[rowIndex][1];
+				    			var w2 = xlRows[rowIndex][0] + '' + xlRows[rowIndex][1];
 				    			su(2,w2)
 				    		}else{
 				    			su(2,xlRows[rowIndex][1])
 				    		}		 
 			    			queryCount++;
 			    			return;
-			    		}else if(queryCount == 2 && a.length >= 0){
-			    			stop = a[0].name;
-			    			queryLens();
-			    			queryCount++;
-			    			return;
-			    		}else if(queryCount == 3){
-			    			console.log('查询失败，直接跳过>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
-			    			queryNoCount++;
 			    		}
 			    	}
 			    	console.log(rowIndex + '::::::::' + start + '<--->' + stop + '::::::距离:::' + len/1000);
@@ -212,8 +233,13 @@ router.post('/uploads',upload.single('myfile'), function(req, res, next) {
 			    		su(1,xlRows[rowIndex][0])
 			    	}
 		    	}catch(err){
+		    		console.log('catch-error-query');
+		    		console.log(err);
 		    		if(err instanceof SyntaxError){
-		    			console.log('catch-error-query');
+		    			console.log('SyntaxError-query');
+		    			queryError();
+		    		} else if( err instanceof TypeError){
+		    			console.log('TypeError-query');
 		    			queryError();
 		    		}
 		    	}
@@ -223,14 +249,19 @@ router.post('/uploads',upload.single('myfile'), function(req, res, next) {
 		    });  
 		});  
 		hreq.on('error',function(err){
-			console.log('---queryLens---error------') 
 		  console.error(err);  
+		  queryError();
 		}); 
 		hreq.end();
+		}catch(error){
+			console.log('post-error');
+			console.log(error);
+		}
+		
 	}
 
 	function queryError(){
-		console.log('queryError');
+		console.log('------------------queryError');
   	rowIndex++;
   	queryCount = 0;
   	if(rowIndex < xlRows.length - 1){
@@ -246,7 +277,7 @@ router.post('/uploads',upload.single('myfile'), function(req, res, next) {
   	}
 	}
 	function over(){
-		console.log('查询结束-');
+		isover = true;
 		console.log(queryNoCount + '条查询失败')
 		var m = parseInt((Date.now() - startTime)/1000/60, 10);
 		var s = parseInt((Date.now() - startTime)/1000%60, 10);
@@ -260,7 +291,7 @@ router.post('/uploads',upload.single('myfile'), function(req, res, next) {
 		//将文件内容插入新的文件中
 		var filePath = '/excles/'+myfilename + Date.now()+'.xlsx';
 		fs.writeFileSync('public'+filePath,buffer,{'flag':'w'});
-		res.send('<h3>总共查询'+rowIndex+'条，其中'+queryNoCount + '条数据没有查到，查询所用时间为'+useTime+'</h3><br><a href = "http://10.236.91.57:3000'+filePath+'">点我下载</a> <a href = "http://10.236.91.57:3000">继续查询</a>');
+		res.send('<h3>总共查询'+rowIndex+'条，其中'+queryNoCount + '条数据没有查到，查询所用时间为：'+useTime+'</h3><br><a href = "http://10.236.91.57:3000'+filePath+'">点我下载</a> <a href = "http://10.236.91.57:3000">继续查询</a>');
 	}
 });
 

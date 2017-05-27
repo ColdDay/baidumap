@@ -17,22 +17,22 @@ function StartUpload(file) {
         success:function(ret){
           $('body').empty().append(ret);
         },
-        error:function(){
-          alert('查询异常');
+        error:function(e){
+          
+          console.log(e);
+          alert(e);
         }
     });
 };
 $('button').click(function(e){
-	e.preventDefault();
-	if(flag){
-		alert('请等待');
-		return;
+
+	if(uploadfile){
+		StartUpload(uploadfile);
+			// setTimeout(function(){
+			// 	$('button').text('查询中..').attr('disabled','disabled')	;
+			// },100)
 	}
-	if(uploadfile)
-  	StartUpload(uploadfile);
-  else{
-  	alert('请选择一个文件');
-  }
+	e.preventDefault();	
 })
  $('body').on('change','.myfile',function(e){
   var files = e.target.files||e.dataTransfer.files;

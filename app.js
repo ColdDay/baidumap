@@ -22,7 +22,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 //设置静态资源访问路由映射目录
 app.use(express.static('public'));
-
+// app.use(timeout('10s'));
 app.use('/', index);
 app.use('/users', users);
 
