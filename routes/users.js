@@ -20,26 +20,38 @@ var upload = multer({ storage: storage })
 /* GET users listing. */
 router.post('/uploads',upload.single('myfile'), function(req, res, next) {
 	console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
-	console.log(Date.now() - serverStartTime)
 	var queryCount = 0;
 	var myfilename = req.file.originalname;
 	var datatype = 0;
 	var start = '北京市';
 	var stop = '西藏自治区';
+	var startCity = '北京';
+	var stopCity = '北京';
 	var rowIndex = 0;
 	var xlRows = [];
 	var tempRows = [];
-	var datatype = req.body.type;
+	var datatype = req.body.type == 1 ? 1 : 0;
+	console.log('类型==='+datatype)
 	var queryNoCount = 0;
 	var startTime = Date.now();
 	var timeoutCount = 0;
+	var xyQueryCount = 0;
 	var isover = false;
 	console.log(req.file.originalname);
 	xlRows = xlsx.parse('public/excles/'+req.file.originalname)[0].data;
 	su(1, xlRows[rowIndex][0]);
 	
+	function find(str,cha,num){
+    var x=str.indexOf(cha);
+    for(var i=0;i<num;i++){
+        x=str.indexOf(cha,x+1);
+    }
+    return x;
+    }
+
 	//查询精确地址
 	function su(type,word){
+		console.log('+++++++++'+word);
 		var data = {
 			wd:word,
 			cid:131,
@@ -74,7 +86,7 @@ router.post('/uploads',upload.single('myfile'), function(req, res, next) {
 			    		//查询不到
 			    		if(word.length <= 0) {
 			    			//递归结束
-			    			console.log('su没有结果')
+			    			console.log('su没有结果======'+type)
 					    	queryError();
 			    		}else{
 			    			//递归删除查询
@@ -89,8 +101,19 @@ router.post('/uploads',upload.single('myfile'), function(req, res, next) {
 			    	}else{
 			    		//起点搜索
 			    		if(type == 1){	
-			    			start = result.q;
-				    		//start = result.s[0].split(/\$\d/)[0].replace(/\$/g,'');
+			    			if(!result.p){
+			    				var w = result.s[0];
+			    				var start_i = find(w,'$',2);
+			    				var end_i = find(w,'$',3);
+			    				startCity = w.substring(0,start_i).replace(/\$/g,'');
+			    				start = w.substring(start_i,end_i).replace(/\$/g,'');
+			    				//start = result.s[0].split(/\$\d/)[0].split('$$')[1].replace(/\$/g,'');
+			    				//startCity = result.s[0].split(/\$\d/)[0].split('$$')[0].replace(/\$/g,'');
+			    			}else{
+			    				start = word;
+			    				startCity = "";
+			    			}
+			    			
 				    		//是否关联。第二列是不是第一列的下属
 				    		if(datatype == 1){
 				    			var w2 = xlRows[rowIndex][0] + '' + xlRows[rowIndex][1];
@@ -101,10 +124,20 @@ router.post('/uploads',upload.single('myfile'), function(req, res, next) {
 				    	}
 				    	//终点搜索
 				    	if(type == 2){
-				    		stop = result.q;
-				    		if(queryCount > 0){
-			    				stop = result.s[0].split(/\$\d/)[0].replace(/\$/g,'');
-			    			}
+				    		if(!result.p){
+				    			var w = result.s[0];
+				    			var stop_i = find(w,'$',2);
+			    				var stopend_i = find(w,'$',3);
+			    				stopCity = w.substring(0,stop_i).replace(/\$/g,'');
+			    				stop = w.substring(stop_i,stopend_i).replace(/\$/g,'');
+
+				    			//stop = result.s[0].split(/\$\d/)[0].split('$$')[1].replace(/\$/g,'')
+			    				//stopCity = result.s[0].split(/\$\d/)[0].split('$$')[0].replace(/\$/g,'');
+				    		}else{
+				    			stop = word
+			    				stopCity ="";
+				    		}
+			    			
 				    		//stop = result.s[0].split(/\$\d/)[0].replace(/\$/g,'');
 				    		queryLens()
 				    	}
@@ -130,9 +163,61 @@ router.post('/uploads',upload.single('myfile'), function(req, res, next) {
 		}); 
 		hreq.end(); 
 	}
-
+	var sq= '';
+	var eq = '';
+	var sn = '';
+	var en = '';
 	//查询距离
 	function queryLens(){
+		if(xyQueryCount > 2){
+			queryError();
+			return;
+		}
+		if(queryCount == 2){
+			var data={  
+	    newmap:1,
+			reqflag:'pcmap',
+			biz:1,
+			from:'webmap',
+			da_par:'direct',
+			pcevaname:'pc4.1',
+			qt:'nav',
+			c:74,
+			navtp:4,
+			sn:sn,
+			en:en,
+			sq:sq,
+			eq:eq,
+			sc:74,
+			ec:74,
+			mrs:1,
+			drag:0,
+			version:4,
+			route_traffic:1,
+			sy:0,
+			da_src:'pcmappg.routeaddr',
+			extinfo:63,
+			tn:'B_NORMAL_MAP',
+			nn:0,
+			u_loc:'12951465,4842932',
+			ie:'utf-8',
+			l:12,
+			b:'(12937545,4796788;12988809,4866548)',
+			t:Date.now()
+		}; 
+	}else{
+		 var sn1 ='';
+		 var en1= '';
+		 if(startCity){
+		 	sn1= '2$$$$$$'+start+'$$1$$'+startCity+'$$'
+		 }else{
+		 	sn1 = '2$$$$$$'+start+'$$0$$$$'
+		 }
+		 if(stopCity){
+		 	en1= '2$$$$$$'+stop+'$$1$$'+stopCity+'$$'
+		 }else{
+		 	en1 = '2$$$$$$'+stop+'$$0$$$$'
+		 }
 		var data={  
 	    newmap:1,
 			reqflag:'pcmap',
@@ -141,11 +226,11 @@ router.post('/uploads',upload.single('myfile'), function(req, res, next) {
 			da_par:'direct',
 			pcevaname:'pc4.1',
 			qt:'nav',
-			c:131,
-			sn:'2$$$$$$'+start+'$$0$$$$',
-			en:'2$$$$$$'+stop+'$$0$$$$',
-			sc:131,
-			ec:131,
+			c:1,
+			sn:sn1,
+			en:en1,
+			sc:1,
+			ec:1,
 			pn:0,
 			rn:5,
 			mrs:1,
@@ -161,8 +246,8 @@ router.post('/uploads',upload.single('myfile'), function(req, res, next) {
 			l:12,
 			b:'(12937545,4796788;12988809,4866548)',
 			t:Date.now()
-		};  
-		console.log('query====in');
+		}; 
+	}  
 		var content = querystring.stringify(data);
 		var waitCount = 0;
 		var queryTimer = setTimeout(function(){
@@ -192,30 +277,56 @@ router.post('/uploads',upload.single('myfile'), function(req, res, next) {
 			    	if(result.content && result.content.routes){
 			    		len = result.content.routes[0].legs[0].distance;
 			    	}else if(result && result.content && result.content.length > 1){
-			    		var a = result.content[1];
-			    		if(a.length == 0 || queryCount == 3){
+			    		var s = result.content[0];
+			    		var e = result.content[1];
+			    		if(queryCount == 2){
 			    			console.log('查询失败，直接跳过>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
 			    			queryNoCount++;
-			    		}else if(queryCount == 0 && a.length > 0){
-			    			stop = a[0].addr || a[0].name;
+			    		}else if(queryCount == 0 && s.length > 0 && e.length > 0){
+			    			start = s[0].name || s[0].addr;
+			    			stop = e[0].name || e[0].addr;
+			    			queryCount++;
 			    			queryLens();
-			    			queryCount++;
 			    			return;
-			    		}else if(queryCount == 1 && a.length > 1){
-			    			stop = a[0].name || a[0].addr;
+			    		}else if(queryCount == 1 && s.length > 0 && e.length > 0){
+			    			console.log('普通查询没有查到-进行坐标查询---------------------')
+			    			if(!s[0].geo || !e[0].geo){
+			    				if(!s[0].geo){
+				    				start = s[0].name+start;
+				    			}
+				    			if(!e[0].geo){
+				    				stop = e[0].name+stop;
+				    			}
+			    				queryCount = 0;
+			    				xyQueryCount++;
+				    			queryLens();
+				    			
+				    			return;
+			    			}
+			    			
+			    			var x1y1 = s[0].geo.split('|')[2].replace(';','');
+			    			var x2y2 = e[0].geo.split('|')[2].replace(';','');
+
+			    			sn = '1$$'+s[0].uid+'$$'+x1y1 + '$$'+ s[0].name + '$$$$$$';
+			    			en = '1$$'+e[0].uid+'$$'+x2y2 + '$$'+ e[0].name + '$$$$$$';
+			    			sq = start;
+			    			eq = stop;
+			    			queryCount++;
 			    			queryLens();
-			    			queryCount++;
-			    			return;
-			    		}else if(queryCount == 2 && a.length > 0){
-			    			if(datatype == 1){
-				    			var w2 = xlRows[rowIndex][0] + '' + xlRows[rowIndex][1];
-				    			su(2,w2)
-				    		}else{
-				    			su(2,xlRows[rowIndex][1])
-				    		}		 
-			    			queryCount++;
+			    			
 			    			return;
 			    		}
+			    		// }else if(queryCount == 2 && s.length > 0 && e.length > 0){
+			    		// 	console.log('第三次查询距离:::::'+start+'----'+stop)
+			    		// 	if(datatype == 1){
+				    	// 		var w2 = xlRows[rowIndex][0] + '' + xlRows[rowIndex][1];
+				    	// 		su(2,w2)
+				    	// 	}else{
+				    	// 		su(2,xlRows[rowIndex][1])
+				    	// 	}		 
+			    		// 	queryCount++;
+			    		// 	return;
+			    		// }
 			    	}
 			    	console.log(rowIndex + '::::::::' + start + '<--->' + stop + '::::::距离:::' + len/1000);
 			    	var arr = [];
@@ -225,6 +336,7 @@ router.post('/uploads',upload.single('myfile'), function(req, res, next) {
 				    tempRows.push(arr);
 			    	rowIndex++;
 			    	queryCount = 0;
+			    	xyQueryCount = 0;
 			    	if(rowIndex == xlRows.length){
 			    		waitCount = 0;
 		    			clearTimeout(queryTimer); 
@@ -245,7 +357,7 @@ router.post('/uploads',upload.single('myfile'), function(req, res, next) {
 		    	}
 		    });  
 		    ress.on('data',function(chunk){
-		    	str+=chunk; 
+		    	str+=chunk;
 		    });  
 		});  
 		hreq.on('error',function(err){
@@ -264,6 +376,8 @@ router.post('/uploads',upload.single('myfile'), function(req, res, next) {
 		console.log('------------------queryError');
   	rowIndex++;
   	queryCount = 0;
+  	xyQueryCount = 0;
+  	queryNoCount++;
   	if(rowIndex < xlRows.length - 1){
   		var arr = [];
     	arr.push(xlRows[rowIndex][0]);
@@ -291,7 +405,7 @@ router.post('/uploads',upload.single('myfile'), function(req, res, next) {
 		//将文件内容插入新的文件中
 		var filePath = '/excles/'+myfilename + Date.now()+'.xlsx';
 		fs.writeFileSync('public'+filePath,buffer,{'flag':'w'});
-		res.send('<h3>总共查询'+rowIndex+'条，其中'+queryNoCount + '条数据没有查到，查询所用时间为：'+useTime+'</h3><br><a href = "http://10.236.91.57:3000'+filePath+'">点我下载</a> <a href = "http://10.236.91.57:3000">继续查询</a>');
+		res.send('<h3>总共查询'+rowIndex+'条，其中'+queryNoCount + '条数据没有查到，查询所用时间为：'+useTime+'</h3><br><a href = "http://10.236.91.57:3000'+filePath+'">点我下载</a><br/> <br/><a href = "http://10.236.91.57:3000">继续查询</a>');
 	}
 });
 

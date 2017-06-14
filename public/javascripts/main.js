@@ -17,10 +17,10 @@ function StartUpload(file) {
         success:function(ret){
           $('body').empty().append(ret);
         },
-        error:function(e){
-          
-          console.log(e);
-          alert(e);
+        error:function(xhr, status, text){
+          console.log(xhr);
+          console.log(status);
+          console.log(text);
         }
     });
 };
