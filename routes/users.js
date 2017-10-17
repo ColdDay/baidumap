@@ -6,7 +6,6 @@ var fs = require('fs');
 var http=require('http'); 
 var https=require('https');
 var querystring=require('querystring'); 
-
 var storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, 'public/excles/')
@@ -21,9 +20,7 @@ var upload = multer({ storage: storage })
 /* GET home page. */
 router.get('/wxlogin', function(req, res, next) {
 	getUUID();
- //
 
- 
 	function getUUID(){
 	 	var hreq = https.get('https://login.wx.qq.com/jslogin?appid=wx782c26e4c19acffb&redirect_uri=https%3A%2F%2Fwx.qq.com%2Fcgi-bin%2Fmmwebwx-bin%2Fwebwxnewloginpage&fun=new&lang=zh_CN&_=1508239448402',function(ress){  
 	    ress.setEncoding('utf-8');  
@@ -74,18 +71,56 @@ router.get('/wxlogin', function(req, res, next) {
 	    	console.log('请求PassTicket------->>>>>>>>');
 	    	var pass_ticket = str.split('<pass_ticket>')[1].split('</pass_ticket>')[0];
 	    	var skey = str.split('<skey>')[1].split('</skey>')[0];
-	    	var wxsid = str.split('<wxsid>')[1].split('</wxsid>')[0];
+	    	var sid = str.split('<wxsid>')[1].split('</wxsid>')[0];
 	    	var uin = str.split('<wxuin>')[1].split('</wxuin>')[0];
 	    	console.log('PassTicket='+pass_ticket);
 	    	console.log('skey='+skey);
-	    	console.log('wxsid='+wxsid);
+	    	console.log('sid='+sid);
 	    	console.log('uin='+uin);
+	    	getWxData(pass_ticket,skey,sid,uin)
 		    //res.send(pass_ticket)
 	    });  
 	    ress.on('data',function(chunk){
 	    	str+=chunk;
 	    });  
 	 	});
+	}
+	function getWxData(pass_ticket,skey,sid,uin){
+		var option={
+		    hostname:'wx.qq.com',
+		    path:'/cgi-bin/mmwebwx-bin/webwxinit?r=-713029383&pass_ticket='+pass_ticket,
+		    method:'POST',
+		    headers:{
+				'Content-Type':'text/plain;charset=UTF-8'
+		    }
+		  };
+	 var hreq = https.request(option,function(ress){  
+	    var str = '';
+	    ress.on('end',function(){
+	    	console.log('getWxData===='+str);
+		    //res.send(pass_ticket)
+	    });  
+	    ress.on('data',function(chunk){
+	    	str+=chunk;
+	    });  
+	});
+  	hreq.on('error', (e) => {
+	  console.error(e);
+	});
+	var BaseRequest = {
+	  	"DeviceID":"e734118103793217",
+		"Sid":sid,
+		"Skey":skey,
+		"Uin":uin
+	}
+	var json = {
+		"BaseRequest": BaseRequest//querystring.stringify(BaseRequest)
+	}
+	
+	var postData = querystring.stringify(json);
+	console.log(postData);
+	//hreq.write(postData);
+	hreq.end();
 
 	}
 });
