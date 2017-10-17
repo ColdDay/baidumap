@@ -3,7 +3,8 @@ var router = express.Router();
 var multer  = require('multer');
 var xlsx = require('node-xlsx');
 var fs = require('fs');
-var http=require('http');  
+var http=require('http'); 
+var https=require('https');
 var querystring=require('querystring'); 
 
 var storage = multer.diskStorage({
@@ -16,6 +17,78 @@ var storage = multer.diskStorage({
 })
 var serverStartTime = Date.now();
 var upload = multer({ storage: storage })
+
+/* GET home page. */
+router.get('/wxlogin', function(req, res, next) {
+	getUUID();
+ //
+
+ 
+	function getUUID(){
+	 	var hreq = https.get('https://login.wx.qq.com/jslogin?appid=wx782c26e4c19acffb&redirect_uri=https%3A%2F%2Fwx.qq.com%2Fcgi-bin%2Fmmwebwx-bin%2Fwebwxnewloginpage&fun=new&lang=zh_CN&_=1508239448402',function(ress){  
+	    ress.setEncoding('utf-8');  
+	    var str = '';
+	    ress.on('end',function(){
+
+	    	var regxp = new RegExp(/^""$/)
+	    	var uuid = str.split('"')[1];
+	    	var img = '<img src="https://login.weixin.qq.com/qrcode/'+uuid + '"/>'
+	    	res.send(img)
+	    	getTicket(uuid)
+
+	    });  
+	    ress.on('data',function(chunk){
+	    	str+=chunk;
+	    });  
+	 	});
+	}
+	function getTicket(uuid){
+		var hreq = https.get('https://login.wx.qq.com/cgi-bin/mmwebwx-bin/login?loginicon=true&uuid='+uuid+'&tip=0&r=-707878598&_=1508241344680',function(ress){  
+	    ress.setEncoding('utf-8');  
+	    var str = '';
+	    ress.on('end',function(){
+	    	console.log('请求ticket。。。。。。');
+	    	var code = str.split(';')[0].split('=')[1];
+	    	console.log('code='+code);
+	    	if(code == 200){
+	    		var ticket = str.split('ticket=')[1].split('&uuid')[0];
+	    		console.log('ticket=' + ticket);
+	    		getPassTicket(ticket,uuid);
+	    	}else{
+	    		getTicket(uuid);
+	    	}
+	    	
+	    });  
+	    ress.on('data',function(chunk){
+	    	str+=chunk;
+	    });  
+	 	});
+	}
+
+	function getPassTicket(ticket,uuid){
+		
+		var hreq = https.get('https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxnewloginpage?ticket='+ticket+'&uuid='+uuid+'&lang=zh_CN&scan=1508243070&fun=new&version=v2&lang=zh_CN',function(ress){  
+	    ress.setEncoding('utf-8');  
+	    var str = '';
+	    ress.on('end',function(){
+	    	console.log('请求PassTicket------->>>>>>>>');
+	    	var pass_ticket = str.split('<pass_ticket>')[1].split('</pass_ticket>')[0];
+	    	var skey = str.split('<skey>')[1].split('</skey>')[0];
+	    	var wxsid = str.split('<wxsid>')[1].split('</wxsid>')[0];
+	    	var uin = str.split('<wxuin>')[1].split('</wxuin>')[0];
+	    	console.log('PassTicket='+pass_ticket);
+	    	console.log('skey='+skey);
+	    	console.log('wxsid='+wxsid);
+	    	console.log('uin='+uin);
+		    //res.send(pass_ticket)
+	    });  
+	    ress.on('data',function(chunk){
+	    	str+=chunk;
+	    });  
+	 	});
+
+	}
+});
 
 /* GET users listing. */
 router.post('/uploads',upload.single('myfile'), function(req, res, next) {

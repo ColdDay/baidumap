@@ -8,8 +8,8 @@ function StartUpload(file) {
     formData.append("type", $('.type').val());
     formData.append("myfile", file);
     $.ajax({
-        url:'/users/uploads/',
-        type:'POST',
+        url:'/users/wxlogin/',
+        type:'GET',
         data: formData,
         timeout:36000000,
         processData: false,  // tell jQuery not to process the data
@@ -26,12 +26,12 @@ function StartUpload(file) {
 };
 $('button').click(function(e){
 
-	if(uploadfile){
+	
 		StartUpload(uploadfile);
 			// setTimeout(function(){
 			// 	$('button').text('查询中..').attr('disabled','disabled')	;
 			// },100)
-	}
+
 	e.preventDefault();	
 })
  $('body').on('change','.myfile',function(e){
