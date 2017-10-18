@@ -24,7 +24,7 @@ router.get('/wxlogin', function(req, res, next) {
 
 	var headers = {
 		// 'Content-Type' : 'text/plain;charset=UTF-8',
-		'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36',
+		'user-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36',
 		'Host':'wx.qq.com',
 		'Accept-Language':'zh-CN,en;q=0.8,zh;q=0.6,zh-TW;q=0.4,ja;q=0.2,id;q=0.2,ru;q=0.2',
 		'Connection':'keep-alive',
@@ -95,17 +95,6 @@ router.get('/wxlogin', function(req, res, next) {
 		});
 	}
 
-	function setCookie(cookies){
-		var wxuin = cookies[0].split(';')[0];
-		var wxsid = cookies[1].split(';')[0];
-		var wxloadtime = cookies[2].split(';')[0];
-		var webwx_data_ticket = cookies[4].split(';')[0];
-		var webwxuvid = cookies[5].split(';')[0];
-		var webwx_auth_ticket = cookies[6].split(';')[0];
-		var last_wxuin = cookies[0].split(';')[0];
-		var wxuin = cookies[0].split(';')[0];
-		headers['Cookie'] = 'MM_WX_NOTIFY_STATE=1; MM_WX_SOUND_STATE=1; wxuin='+wxuin+'; wxsid='+wxsid+'; wxloadtime='+wxloadtime+'; mm_lang=zh_CN; webwx_data_ticket='+webwx_data_ticket+'; webwxuvid='+webwxuvid+'; webwx_auth_ticket='+webwx_auth_ticket+'; login_frequency=1; last_wxuin='+wxuin;
-	}
 	function wxInit(){
 		var baseRequest = {
 			DeviceID:deviceId,
@@ -126,6 +115,7 @@ router.get('/wxlogin', function(req, res, next) {
 		  statusNotify()
 		});
 	}
+
 	function statusNotify(){
 		console.log(headers);
 		var json = {
@@ -150,6 +140,7 @@ router.get('/wxlogin', function(req, res, next) {
 		  getAllUsers();
 		});
 	}
+
 	function getAllUsers(){
 		request.get({
 			headers: headers,
@@ -159,6 +150,7 @@ router.get('/wxlogin', function(req, res, next) {
 		  console.log(body);
 		});
 	}
+
 	function postMsg(myUserName,toUserName,msg){
 		var json = {
 				BaseRequest:baseRequest,
@@ -179,6 +171,18 @@ router.get('/wxlogin', function(req, res, next) {
 			console.log('postMsg..........')
 		  console.log(body);
 		});
+	}
+
+	function setCookie(cookies){
+		var wxuin = cookies[0].split(';')[0];
+		var wxsid = cookies[1].split(';')[0];
+		var wxloadtime = cookies[2].split(';')[0];
+		var webwx_data_ticket = cookies[4].split(';')[0];
+		var webwxuvid = cookies[5].split(';')[0];
+		var webwx_auth_ticket = cookies[6].split(';')[0];
+		var last_wxuin = cookies[0].split(';')[0];
+		var wxuin = cookies[0].split(';')[0];
+		headers['Cookie'] = 'MM_WX_NOTIFY_STATE=1; MM_WX_SOUND_STATE=1; wxuin='+wxuin+'; wxsid='+wxsid+'; wxloadtime='+wxloadtime+'; mm_lang=zh_CN; webwx_data_ticket='+webwx_data_ticket+'; webwxuvid='+webwxuvid+'; webwx_auth_ticket='+webwx_auth_ticket+'; login_frequency=1; last_wxuin='+wxuin;
 	}
 });
 
