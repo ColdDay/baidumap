@@ -112,12 +112,12 @@ router.get('/wxlogin', function(req, res, next) {
 		}, function(error, response, body){
 			console.log('getWxData..........');
 		 	myUserName = body.User.UserName;
-		  statusNotify()
+		  statusNotify();
+		  getAllUsers();
 		});
 	}
 
 	function statusNotify(){
-		console.log(headers);
 		var json = {
 			BaseRequest:{
 				DeviceID:deviceId,
@@ -137,7 +137,7 @@ router.get('/wxlogin', function(req, res, next) {
 		}, function(error, response, body){
 			console.log('statusNotify..........');
 			console.log(body)
-		  getAllUsers();
+		  
 		});
 	}
 
@@ -147,10 +147,50 @@ router.get('/wxlogin', function(req, res, next) {
 		  url:'https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxgetcontact?lang=zh_CN&pass_ticket='+pass_ticket+'&r='+Date.now()+'&seq=0&skey='+skey
 		}, function(error, response, body){
 			console.log('getAllUsers..........')
-		  console.log(body);
+			console.log(body)
+		  var list = JSON.parse(body).MemberList;
+		  console.log(list.length)
+		  for (var i = 0; i < list.length; i++) {
+		  	var member = list[i];
+		  	if(member.NickName == '曹利敏') {
+		  		console.log(member)
+		  	}
+		  }
 		});
 	}
-
+	var member = {
+		"Uin": 0,
+		"UserName": "@4fefa813b154a90b245bd795d42d10bb64eac76235793642f87601b64e528ee3",
+		"NickName": "孙常淘",
+		"HeadImgUrl": "/cgi-bin/mmwebwx-bin/webwxgeticon?seq=661865615&username=@4fefa813b154a90b245bd795d42d10bb64eac76235793642f87601b64e528ee3&skey=@crypt_a1017fd0_14958be5690f3a6972e2e5e31b97bdfb",
+		"ContactFlag": 3,
+		"MemberCount": 0,
+		"MemberList": [],
+		"RemarkName": "",
+		"HideInputBarFlag": 0,
+		"Sex": 1,
+		"Signature": "开心每一天",
+		"VerifyFlag": 0,
+		"OwnerUin": 0,
+		"PYInitial": "SCT",
+		"PYQuanPin": "sunchangtao",
+		"RemarkPYInitial": "",
+		"RemarkPYQuanPin": "",
+		"StarFriend": 0,
+		"AppAccountFlag": 0,
+		"Statues": 0,
+		"AttrStatus": 4133,
+		"Province": "山东",
+		"City": "威海",
+		"Alias": "",
+		"SnsFlag": 17,
+		"UniFriend": 0,
+		"DisplayName": "",
+		"ChatRoomId": 0,
+		"KeyWord": "",
+		"EncryChatRoomId": "",
+		"IsOwner": 0
+		}
 	function postMsg(myUserName,toUserName,msg){
 		var json = {
 				BaseRequest:baseRequest,
@@ -182,7 +222,7 @@ router.get('/wxlogin', function(req, res, next) {
 		var webwx_auth_ticket = cookies[6].split(';')[0];
 		var last_wxuin = cookies[0].split(';')[0];
 		var wxuin = cookies[0].split(';')[0];
-		headers['Cookie'] = 'MM_WX_NOTIFY_STATE=1; MM_WX_SOUND_STATE=1; wxuin='+wxuin+'; wxsid='+wxsid+'; wxloadtime='+wxloadtime+'; mm_lang=zh_CN; webwx_data_ticket='+webwx_data_ticket+'; webwxuvid='+webwxuvid+'; webwx_auth_ticket='+webwx_auth_ticket+'; login_frequency=1; last_wxuin='+wxuin;
+		headers['Cookie'] = 'MM_WX_NOTIFY_STATE=1; MM_WX_SOUND_STATE=1; '+wxuin+';'+wxsid+'; '+wxloadtime+'; mm_lang=zh_CN; '+webwx_data_ticket+'; '+webwxuvid+'; '+webwx_auth_ticket+'; login_frequency=1; '+wxuin;
 	}
 });
 
