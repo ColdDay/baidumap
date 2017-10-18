@@ -153,7 +153,8 @@ router.get('/wxlogin', function(req, res, next) {
 		  for (var i = 0; i < list.length; i++) {
 		  	var member = list[i];
 		  	if(member.NickName == '曹利敏') {
-		  		console.log(member)
+		  		postMsg(myUserName,member.UserName,'走吗');
+		  		break;
 		  	}
 		  }
 		});
@@ -193,18 +194,24 @@ router.get('/wxlogin', function(req, res, next) {
 		}
 	function postMsg(myUserName,toUserName,msg){
 		var json = {
-				BaseRequest:baseRequest,
+				BaseRequest:{
+					DeviceID:deviceId,
+					Sid:sid,
+					Skey:skey,
+					Uin:uin
+				},
 				Msg:{
 					ClientMsgId:Date.now(),
 					Type:1,
-					ToUserName:toUserName,
 					LocalID:Date.now(),
 					FromUserName:myUserName,
+					ToUserName:toUserName,
 					Content:msg
-				}
+				},
+				Scene:0
 		}
 		request.post({
-		  headers: {'content-type' : 'text/plain;charset=UTF-8'},
+		  headers: headers,
 		  url:'https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxsendmsg?lang=zh_CN&pass_ticket='+pass_ticket,
 		  json:json
 		}, function(error, response, body){
