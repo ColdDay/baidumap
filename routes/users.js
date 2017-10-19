@@ -69,8 +69,10 @@ router.get('/wxlogin', function(req, res, next) {
 	    		var ticket = str.split('ticket=')[1].split('&uuid')[0];
 	    		console.log('ticket=' + ticket);
 	    		getPassTicket(ticket,uuid);
-	    	}else{
+	    	}else if(code == 408){
 	    		getTicket(uuid);
+	    	}else{
+	    		console.log('超时');
 	    	}
 	    	
 	    });  
@@ -152,10 +154,11 @@ router.get('/wxlogin', function(req, res, next) {
 		  console.log(list.length)
 		  for (var i = 0; i < list.length; i++) {
 		  	var member = list[i];
-		  	if(member.NickName == '曹利敏') {
-		  		postMsg(myUserName,member.UserName,'走吗');
-		  		break;
-		  	}
+		  	console.log(member.NickName,member.UserName);
+		  	// if(member.NickName == '曹利敏') {
+		  	// 	postMsg(myUserName,member.UserName,'走吗');
+		  	// 	break;
+		  	// }
 		  }
 		});
 	}
