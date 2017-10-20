@@ -61,6 +61,7 @@ router.get('/wxlogin', function(req, res, next) {
 		'Referer':'https://wx.qq.com/',
 		'DNT':'1'
 	}
+	var wx2 = "";
 	var myUserName = '';
 	var pass_ticket = '';
 	var skey = '';
@@ -77,6 +78,7 @@ router.get('/wxlogin', function(req, res, next) {
 
 	    	var regxp = new RegExp(/^""$/)
 	    	var uuid = str.split('"')[1];
+	    	console.log('uuid=='+uuid)
 	    	var img = '<img src="https://login.weixin.qq.com/qrcode/'+uuid + '"/>'
 	    	res.send(img)
 	    	getTicket(uuid)
@@ -88,20 +90,27 @@ router.get('/wxlogin', function(req, res, next) {
 	 	});
 	}
 	function getTicket(uuid){
-		var hreq = https.get('https://login.wx.qq.com/cgi-bin/mmwebwx-bin/login?loginicon=true&uuid='+uuid+'&tip=0&r=-707878598&_=1508241344680',function(ress){  
+		var hreq = https.get('https://login.wx.qq.com/cgi-bin/mmwebwx-bin/login?loginicon=true&uuid='+uuid+'&tip=0&r=-880061546&_='+Date.now(),function(ress){  
 	    ress.setEncoding('utf-8');  
 	    var str = '';
 	    ress.on('end',function(){
 	    	console.log('请求ticket。。。。。。');
+	    	console.log(str);
 	    	var code = str.split(';')[0].split('=')[1];
 	    	console.log('code='+code);
 	    	if(code == 200){
+	    		if(str.match(/wx2.qq.com/) != null) {
+		    		wx2 = "2";
+		    		headers.Host = "wx2.qq.com";
+		    		headers.Referer = "https://wx2.qq.com/"
+		    	}
 	    		var ticket = str.split('ticket=')[1].split('&uuid')[0];
 	    		console.log('ticket=' + ticket);
 	    		getPassTicket(ticket,uuid);
-	    	}else if(code == 408){
+	    	}else if(code == 408 || code==201){
 	    		getTicket(uuid);
 	    	}else{
+	    		console.log(str);
 	    		console.log('超时');
 	    	}
 	    	
@@ -114,9 +123,10 @@ router.get('/wxlogin', function(req, res, next) {
 
 	function getPassTicket(ticket,uuid){
 		request.get({
-		  url:'https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxnewloginpage?ticket='+ticket+'&uuid='+uuid+'&lang=zh_CN&scan=1508243070&fun=new&version=v2&lang=zh_CN',
+		  url:'https://wx'+wx2+'.qq.com/cgi-bin/mmwebwx-bin/webwxnewloginpage?ticket='+ticket+'&uuid='+uuid+'&lang=zh_CN&scan='+parseInt(Date.now())+'&fun=new&version=v2&lang=zh_CN',
 		}, function(error, response, body){
 			console.log('请求PassTicket------->>>>>>>>');
+			console.log(body);
 			var str = body.toString();
     	pass_ticket = str.split('<pass_ticket>')[1].split('</pass_ticket>')[0];
     	skey = str.split('<skey>')[1].split('</skey>')[0];
@@ -139,7 +149,7 @@ router.get('/wxlogin', function(req, res, next) {
 		}
 		request.post({
 		  headers: headers,
-		  url:'https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxinit?r=-713029383&pass_ticket='+pass_ticket,
+		  url:'https://wx'+wx2+'.qq.com/cgi-bin/mmwebwx-bin/webwxinit?r=-713029383&pass_ticket='+pass_ticket,
 		  json:json
 		}, function(error, response, body){
 			console.log('getWxData..........');
@@ -164,7 +174,7 @@ router.get('/wxlogin', function(req, res, next) {
 		}
 		request.post({
 		  headers: headers,
-		  url:'https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxstatusnotify?pass_ticket='+pass_ticket,
+		  url:'https://wx'+wx2+'.qq.com/cgi-bin/mmwebwx-bin/webwxstatusnotify?pass_ticket='+pass_ticket,
 		  json:json
 		}, function(error, response, body){
 			console.log('statusNotify..........');
@@ -176,7 +186,7 @@ router.get('/wxlogin', function(req, res, next) {
 	function getAllUsers(){
 		request.get({
 			headers: headers,
-		  url:'https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxgetcontact?lang=zh_CN&pass_ticket='+pass_ticket+'&r='+Date.now()+'&seq=0&skey='+skey
+		  url:'https://wx'+wx2+'.qq.com/cgi-bin/mmwebwx-bin/webwxgetcontact?lang=zh_CN&pass_ticket='+pass_ticket+'&r='+Date.now()+'&seq=0&skey='+skey
 		}, function(error, response, body){
 			console.log('getAllUsers..........')
 			console.log(body)
@@ -185,10 +195,10 @@ router.get('/wxlogin', function(req, res, next) {
 		  for (var i = 0; i < list.length; i++) {
 		  	var member = list[i];
 		  	console.log(member.NickName,member.UserName);
-		  	// if(member.NickName == '曹利敏') {
-		  	// 	postMsg(myUserName,member.UserName,'走吗');
-		  	// 	break;
-		  	// }
+		  	if(member.NickName == '曹利敏') {
+		  	 	postMsg(myUserName,member.UserName,'走吗');
+		   		break;
+		  	 }
 		  }
 		});
 	}
@@ -245,7 +255,7 @@ router.get('/wxlogin', function(req, res, next) {
 		}
 		request.post({
 		  headers: headers,
-		  url:'https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxsendmsg?lang=zh_CN&pass_ticket='+pass_ticket,
+		  url:'https://wx'+wx2+'.qq.com/cgi-bin/mmwebwx-bin/webwxsendmsg?lang=zh_CN&pass_ticket='+pass_ticket,
 		  json:json
 		}, function(error, response, body){
 			console.log('postMsg..........')
