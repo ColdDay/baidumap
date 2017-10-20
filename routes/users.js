@@ -8,6 +8,8 @@ var https=require('https');
 var querystring=require('querystring'); 
 var request = require('request');
 
+
+
 var storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, 'public/excles/')
@@ -19,6 +21,34 @@ var storage = multer.diskStorage({
 var serverStartTime = Date.now();
 var upload = multer({ storage: storage })
 
+router.post('/getimg', function(req, res, next) {
+	var list = JSON.parse(req.body.list);
+	var store = req.body.store;
+	for (var i = 0; i < list.length; i++) {
+		var item = list[i];
+		var code = item.code;
+		if(code.trim().toString().length == 0){
+			code = i;
+		}
+		for (var j = 0; j < item.imgs.length; j++) {
+			var imgSrc = item.imgs[j];
+			(function(index,link,id){
+				request.get({
+				  url:link,
+				  encoding: 'binary'
+				}, function(error, response, body){
+					fs.writeFileSync('folds/'+store+'-'+id.toString().replace('/','_')+'('+index+').jpg', body, 'binary');
+				});
+			})(j,imgSrc,code)
+		}
+	}
+	res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Content-Type,Content-Length, Authorization, Accept,X-Requested-With");
+  res.header("Access-Control-Allow-Methods","PUT,POST,GET,DELETE,OPTIONS");
+  res.header("X-Powered-By",' 3.2.1')
+	res.send('');
+
+});
 /* GET home page. */
 router.get('/wxlogin', function(req, res, next) {
 
